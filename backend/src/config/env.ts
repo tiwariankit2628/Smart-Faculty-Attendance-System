@@ -46,18 +46,18 @@ const envSchema = z.object({
   MAX_PROFILE_PHOTO_SIZE_BYTES: z.coerce.number().default(5 * 1024 * 1024),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === 'production') {
-    if (data.MOCK_FACE_SERVICE) {
+    if (data.MOCK_FACE_SERVICE && process.env.ALLOW_MOCK_FACE_SERVICE !== 'true') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['MOCK_FACE_SERVICE'],
-        message: 'CRITICAL: MOCK_FACE_SERVICE cannot be true in production mode.',
+        message: 'CRITICAL: MOCK_FACE_SERVICE cannot be true in production mode unless ALLOW_MOCK_FACE_SERVICE=true is explicitly set.',
       });
     }
-    if (data.CORS_ORIGIN.includes('localhost') || data.CORS_ORIGIN === '*') {
+    if ((data.CORS_ORIGIN.includes('localhost') || data.CORS_ORIGIN === '*') && process.env.ALLOW_LOCALHOST_CORS !== 'true') {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['CORS_ORIGIN'],
-        message: 'CRITICAL: CORS_ORIGIN cannot be localhost or wildcard (*) in production mode.',
+        message: 'CRITICAL: CORS_ORIGIN cannot be localhost or wildcard (*) in production mode unless ALLOW_LOCALHOST_CORS=true is set for staging/testing.',
       });
     }
     if (data.JWT_ACCESS_SECRET.length < 32 || data.JWT_ACCESS_SECRET.toLowerCase().includes('change_me')) {
