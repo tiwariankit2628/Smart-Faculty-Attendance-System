@@ -1,0 +1,42 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Node dependencies and build artifacts
+node_modules/
+dist/
+build/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.tsbuildinfo
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Database and local runtime data
+data/
+storage/
+storage/profile_photos/
+backend/storage/
+*.log
+scratch/
+.tempmediaStorage/
+.pytest_cache/
+*.jpg
+*.jpeg
+*.png
+!frontend/public/**/*.png
+!frontend/public/**/*.jpg

@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-background: #F5F7FC;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #EDF2F9;
+  --color-text-primary: #17233F;
+  --color-text-secondary: #64748B;
+  --color-border: #E2E8F0;
+  --color-primary: #5B45F5;
+  --color-primary-hover: #4834DB;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+  --color-input: #FFFFFF;
+  --color-focus-ring: #5B45F5;
+
+  /* Legacy aliases for backwards compatibility */
+  --primary-purple: #5B45F5;
+  --secondary-violet: #7865FF;
+  --page-bg: #F5F7FC;
+  --card-bg: #FFFFFF;
+  --text-primary: #17233F;
+  --text-secondary: #64748B;
+  --success-green: #10B981;
+  --soft-blue: #EAF3FF;
+  --soft-purple: #F1EDFF;
+  --soft-green: #E7FAF1;
+  --soft-orange: #FFF3E5;
+  --border-light: #E2E8F0;
+}
+
+.dark {
+  --color-background: #0B1120;
+  --color-surface: #151F33;
+  --color-surface-secondary: #1C2940;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #A7B4CC;
+  --color-border: #2A3850;
+  --color-primary: #7865FF;
+  --color-primary-hover: #5B45F5;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #38BDF8;
+  --color-input: #151F33;
+  --color-focus-ring: #7865FF;
+
+  /* Legacy aliases in dark mode */
+  --primary-purple: #7865FF;
+  --secondary-violet: #9082FF;
+  --page-bg: #0B1120;
+  --card-bg: #151F33;
+  --text-primary: #F1F5F9;
+  --text-secondary: #A7B4CC;
+  --success-green: #10B981;
+  --soft-blue: rgba(59, 130, 246, 0.15);
+  --soft-purple: rgba(120, 101, 255, 0.15);
+  --soft-green: rgba(16, 185, 129, 0.15);
+  --soft-orange: rgba(249, 115, 22, 0.15);
+  --border-light: #2A3850;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

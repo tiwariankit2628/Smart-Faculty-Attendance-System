@@ -1,0 +1,15 @@
+{
+  "name": "smart-faculty-attendance-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Faculty Attendance System Monorepo",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:face": "python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --app-dir face-service",
+    "build:backend": "npm run build --prefix backend",
+    "build:frontend": "npm run build --prefix frontend",
+    "test:backend": "npm run test --prefix backend",
+    "test:frontend": "npm run test --prefix frontend"
+  }
+}

@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+venv/
+.venv/
+data/embeddings/*.json
+data/embeddings/*.tmp
+.DS_Store

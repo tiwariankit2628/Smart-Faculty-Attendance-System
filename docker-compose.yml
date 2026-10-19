@@ -1,0 +1,176 @@
+version: '3.8'
+
+# ==============================================================================
+# Complete Production Stack Orchestration
+# Services:
+#   - mongodb (Database)
+#   - redis (Caching, Idempotency & Distributed Locks)
+#   - face-service (FastAPI AI Biometric Microservice)
+#   - backend (Node.js/Express Core API)
+#   - frontend (Next.js 16 Web Dashboard)
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. MongoDB Database
+  # ----------------------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: attendance-mongodb
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - attendance-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # 2. Redis Cache & Concurrency Lock Store
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: attendance-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - attendance-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ----------------------------------------------------------------------------
+  # 3. Facial Verification & Passive Liveness AI Microservice
+  # ----------------------------------------------------------------------------
+  face-service:
+    build:
+      context: ./face-service
+      dockerfile: Dockerfile
+    container_name: attendance-face-service
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENVIRONMENT=production
+      - FACE_SERVICE_API_KEY=${FACE_SERVICE_API_KEY:-internal_secret_face_service_key_7788}
+      - ALLOWED_ORIGINS=["http://localhost:5000", "http://backend:5000"]
+      - SIMILARITY_THRESHOLD=0.65
+      - L2_DISTANCE_THRESHOLD=0.85
+      - LIVENESS_THRESHOLD=0.55
+      - STORAGE_DIR=/app/data/embeddings
+    volumes:
+      - face_embeddings_data:/app/data/embeddings
+    networks:
+      - attendance-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # 4. Core Backend REST API
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: attendance-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/attendance_system
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - FACE_SERVICE_URL=http://face-service:8000
+      - FACE_SERVICE_API_KEY=${FACE_SERVICE_API_KEY:-internal_secret_face_service_key_7788}
+      - DEFAULT_GEOFENCE_LAT=${DEFAULT_GEOFENCE_LAT:-31.2536}
+      - DEFAULT_GEOFENCE_LNG=${DEFAULT_GEOFENCE_LNG:-75.7037}
+      - DEFAULT_GEOFENCE_RADIUS_METERS=${DEFAULT_GEOFENCE_RADIUS_METERS:-500}
+      - MAX_ALLOWED_ACCURACY_METERS=${MAX_ALLOWED_ACCURACY_METERS:-35}
+      - CAMPUS_ALLOWED_IPS=${CAMPUS_ALLOWED_IPS:-127.0.0.1,::1}
+      - CAMPUS_ALLOWED_CIDRS=${CAMPUS_ALLOWED_CIDRS:-10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      - ENABLE_CAMPUS_NETWORK_CHECK=${ENABLE_CAMPUS_NETWORK_CHECK:-true}
+      - TRUST_PROXY=${TRUST_PROXY:-1}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      face-service:
+        condition: service_healthy
+    networks:
+      - attendance-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ----------------------------------------------------------------------------
+  # 5. Next.js Web Dashboard Frontend
+  # ----------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: attendance-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - attendance-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+# ------------------------------------------------------------------------------
+# Persistent Volume Storage
+# ------------------------------------------------------------------------------
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  face_embeddings_data:
+    driver: local
+
+# ------------------------------------------------------------------------------
+# Isolated Internal Network
+# ------------------------------------------------------------------------------
+networks:
+  attendance-net:
+    driver: bridge
